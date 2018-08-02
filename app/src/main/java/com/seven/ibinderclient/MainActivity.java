@@ -21,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     IButtonControlAIDL mIButtonControlAIDL;
     Button btnCommit;
+    Button btnStop;
     EditText etName;
     EditText etBack;
     boolean isBind;
@@ -30,34 +31,46 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        btnCommit = findViewById(R.id.button);
+        btnCommit = findViewById(R.id.btn_start);
+        btnStop = findViewById(R.id.btn_stop);
         etName = findViewById(R.id.et_name);
         etBack = findViewById(R.id.et_back);
-
         btnCommit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 Intent intent = new Intent();
                 intent.setPackage("com.seven.ibinderserver");
                 intent.setAction("AIDL.buttonserver");
-                if (isBind){
-                    ButtonInfoEntry buttonInfoEntry ;
+                if (isBind) {
+                    ButtonInfoEntry buttonInfoEntry;
                     try {
                         List<ButtonInfoEntry> buttonInfoEntries = mIButtonControlAIDL.getButtonInfoList();
-                        if (buttonInfoEntries.size()>0) {
-                            buttonInfoEntry = mIButtonControlAIDL.getButtonInfoList().get(0);
+                        if (buttonInfoEntries.size() > 0) {
+                            buttonInfoEntry = mIButtonControlAIDL.getButtonInfoList().get(buttonInfoEntries.size()-1);
                             Log.e("buttonInfoEntry===", buttonInfoEntry.toString());
                             etName.setText(buttonInfoEntry.getButtonName());
                             etBack.setText(String.valueOf(buttonInfoEntry.getButtonBackground()));
                         } else {
-                            Log.e("buttonInfoEntry===","没有数据");
+                            Log.e("buttonInfoEntry===", "没有数据");
                         }
                     } catch (RemoteException e) {
                         e.printStackTrace();
                     }
 
                 } else {
-                    isBind = bindService(intent,mServiceConnection,BIND_AUTO_CREATE);
+                    isBind = bindService(intent, mServiceConnection, BIND_AUTO_CREATE);
+                }
+            }
+        });
+
+        btnStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (isBind) {
+                    unbindService(mServiceConnection);
+                    isBind = false;
                 }
             }
         });

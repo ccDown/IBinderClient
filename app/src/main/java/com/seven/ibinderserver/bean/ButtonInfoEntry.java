@@ -57,4 +57,12 @@ public class ButtonInfoEntry implements Parcelable {
         dest.writeString(mButtonName);
         dest.writeInt(mButtonBackground);
     }
+
+    @Override
+    public String toString() {
+        return "ButtonInfoEntry{" +
+                "mButtonName='" + mButtonName + '\'' +
+                ", mButtonBackground=" + mButtonBackground +
+                '}';
+    }
 }

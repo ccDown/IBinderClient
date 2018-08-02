@@ -15,6 +15,8 @@ import android.widget.EditText;
 import com.seven.ibinderserver.IButtonControlAIDL;
 import com.seven.ibinderserver.bean.ButtonInfoEntry;
 
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     IButtonControlAIDL mIButtonControlAIDL;
@@ -35,14 +37,21 @@ public class MainActivity extends AppCompatActivity {
         btnCommit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this,ButtonService.class);
+                Intent intent = new Intent();
+                intent.setPackage("com.seven.ibinderserver");
+                intent.setAction("AIDL.buttonserver");
                 if (isBind){
-                    ButtonInfoEntry buttonInfoEntry = new ButtonInfoEntry();
+                    ButtonInfoEntry buttonInfoEntry ;
                     try {
-                        buttonInfoEntry =  mIButtonControlAIDL.getButtonInfoList().get(0);
-                        Log.e("buttonInfoEntry===",buttonInfoEntry.toString());
-                        etName.setText(buttonInfoEntry.getButtonName());
-                        etBack.setText(buttonInfoEntry.getButtonBackground());
+                        List<ButtonInfoEntry> buttonInfoEntries = mIButtonControlAIDL.getButtonInfoList();
+                        if (buttonInfoEntries.size()>0) {
+                            buttonInfoEntry = mIButtonControlAIDL.getButtonInfoList().get(0);
+                            Log.e("buttonInfoEntry===", buttonInfoEntry.toString());
+                            etName.setText(buttonInfoEntry.getButtonName());
+                            etBack.setText(String.valueOf(buttonInfoEntry.getButtonBackground()));
+                        } else {
+                            Log.e("buttonInfoEntry===","没有数据");
+                        }
                     } catch (RemoteException e) {
                         e.printStackTrace();
                     }
@@ -57,13 +66,22 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mIButtonControlAIDL = (IButtonControlAIDL) service;
+            mIButtonControlAIDL = IButtonControlAIDL.Stub.asInterface(service);
+            Log.e("连接  ComponentName=====",name.getClassName());
+
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mIButtonControlAIDL = null;
             isBind = false;
+            Log.e("断开  ComponentName=====",name.getClassName());
         }
     };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mServiceConnection);
+    }
 }

@@ -26,6 +26,16 @@ public class MainActivity extends AppCompatActivity {
     EditText etBack;
     boolean isBind;
 
+    //死亡代理 当连接断开之后打印日志
+    private IBinder.DeathRecipient deathRecipient = new IBinder.DeathRecipient() {
+        @Override
+        public void binderDied() {
+            Log.e("deathRecipient", "连接断开");
+            mIButtonControlAIDL.asBinder().unlinkToDeath(this, 0);
+
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,10 +57,13 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         List<ButtonInfoEntry> buttonInfoEntries = mIButtonControlAIDL.getButtonInfoList();
                         if (buttonInfoEntries.size() > 0) {
-                            buttonInfoEntry = mIButtonControlAIDL.getButtonInfoList().get(buttonInfoEntries.size()-1);
+                            buttonInfoEntry = mIButtonControlAIDL.getButtonInfoList().get(buttonInfoEntries.size() - 1);
                             Log.e("buttonInfoEntry===", buttonInfoEntry.toString());
                             etName.setText(buttonInfoEntry.getButtonName());
                             etBack.setText(String.valueOf(buttonInfoEntry.getButtonBackground()));
+
+//                            //判断是否存活
+//                            mIButtonControlAIDL.asBinder().isBinderAlive();
                         } else {
                             Log.e("buttonInfoEntry===", "没有数据");
                         }
@@ -80,7 +93,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mIButtonControlAIDL = IButtonControlAIDL.Stub.asInterface(service);
-            Log.e("连接  ComponentName=====",name.getClassName());
+            Log.e("连接  ComponentName=====", name.getClassName());
+
+            try {
+                mIButtonControlAIDL.asBinder().linkToDeath(deathRecipient, 0);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+
 
         }
 
@@ -88,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceDisconnected(ComponentName name) {
             mIButtonControlAIDL = null;
             isBind = false;
-            Log.e("断开  ComponentName=====",name.getClassName());
+            Log.e("断开  ComponentName=====", name.getClassName());
         }
     };
 
